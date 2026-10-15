@@ -509,25 +509,6 @@ class OrderAdjustSerializer(serializers.Serializer):
         return self.context['order']
 
 
-class PurchaseOrderHoldSerializer(OrderAdjustSerializer):
-    """Serializer for placing a PurchaseOrder on hold."""
-
-    def save(self):
-        """Save the serializer to 'hold' the order."""
-        self.order.hold_order()
-
-
-class PurchaseOrderCancelSerializer(OrderAdjustSerializer):
-    """Serializer for cancelling a PurchaseOrder."""
-
-    def save(self):
-        """Save the serializer to 'cancel' the order."""
-        if not self.order.can_cancel:
-            raise ValidationError(_('Order cannot be cancelled'))
-
-        self.order.cancel_order()
-
-
 class PurchaseOrderCompleteSerializer(OrderAdjustSerializer):
     """Serializer for completing a purchase order."""
 
@@ -557,18 +538,6 @@ class PurchaseOrderCompleteSerializer(OrderAdjustSerializer):
         order = self.context['order']
 
         return {'is_complete': order.is_complete}
-
-    def save(self):
-        """Save the serializer to 'complete' the order."""
-        self.order.complete_order()
-
-
-class PurchaseOrderIssueSerializer(OrderAdjustSerializer):
-    """Serializer for issuing (sending) a purchase order."""
-
-    def save(self):
-        """Save the serializer to 'place' the order."""
-        self.order.place_order()
 
 
 @register_importer()
@@ -1473,6 +1442,7 @@ class SalesOrderShipmentSerializer(
             'allocated_items',
             'shipment_date',
             'shipment_address',
+            'contact',
             'delivery_date',
             'checked_by',
             'duplicate',
@@ -1484,6 +1454,7 @@ class SalesOrderShipmentSerializer(
             # Extra detail fields
             'parameters',
             'checked_by_detail',
+            'contact_detail',
             'customer_detail',
             'order_detail',
             'shipment_address_detail',
@@ -1553,6 +1524,18 @@ class SalesOrderShipmentSerializer(
         },
         default_include=True,
         prefetch_fields=['shipment_address'],
+    )
+
+    contact_detail = OptionalField(
+        serializer_class=ContactSerializer,
+        serializer_kwargs={
+            'source': 'contact',
+            'many': False,
+            'read_only': True,
+            'allow_null': True,
+        },
+        default_include=True,
+        prefetch_fields=['contact'],
     )
 
     parameters = common.filters.enable_parameters_filter()

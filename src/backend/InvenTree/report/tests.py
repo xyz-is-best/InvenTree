@@ -14,8 +14,8 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.core.files.storage import Storage, default_storage
-from django.template import Context, TemplateDoesNotExist
-from django.template.loader import engines, render_to_string
+from django.template import Context, TemplateDoesNotExist, engines
+from django.template.loader import render_to_string
 from django.test import TestCase
 from django.urls import reverse
 from django.utils.timezone import now
@@ -66,6 +66,23 @@ class ReportTest(InvenTreeAPITestCase):
         apps.get_app_config('report').create_default_reports()
 
         return super().setUp()
+
+    def test_internal_company_context(self):
+        """Test that the default internal company is available in the base context."""
+        from company.models import Company
+
+        template = ReportTemplate.objects.first()
+        self.assertIsNone(template.base_context()['internal_company'])
+
+        company = Company.objects.create(
+            name='Our Company', is_supplier=False, is_internal=True
+        )
+
+        # Value is cached against the template instance
+        self.assertIsNone(template.base_context()['internal_company'])
+
+        template = ReportTemplate.objects.get(pk=template.pk)
+        self.assertEqual(template.base_context()['internal_company'], company)
 
     def test_list_endpoint(self):
         """Test that the LIST endpoint works for each report."""

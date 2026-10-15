@@ -332,7 +332,7 @@ class ReferenceIndexingMixin(models.Model):
             # No existing items
             return 1
 
-        reference = latest.reference.strip
+        reference = latest.reference.strip()
 
         try:
             reference = InvenTree.format.extract_named_group(
@@ -1299,7 +1299,7 @@ class PathStringMixin(models.Model):
             # Update the pathstring values for any lower nodes,
             # by offloading the update to the background worker
             if not rebuild_offloaded and self.get_descendant_count() > 0:
-                self.__class__.offload_tree_rebuild([self.tree_id])
+                self.__class__.offload_tree_rebuild([self.tree_id])  # ty: ignore[invalid-attribute-access]
 
     def delete(self, *args, **kwargs):
         """Custom delete method for PathStringMixin.
